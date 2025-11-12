@@ -130,7 +130,7 @@ chapters.forEach((chapter, chapterIndex) => {
         INITIAL_PAGES.push({
             id: idCounter++,
             type: 'image',
-            prompt: `${promptForPage} Formato vertical 9:16.`,
+            prompt: promptForPage,
             imageUrl: null,
         });
         

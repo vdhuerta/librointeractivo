@@ -1,5 +1,6 @@
 
-import { GoogleGenAI, Modality } from "@google/genai";
+
+import { GoogleGenAI } from "@google/genai";
 
 // Assume process.env.API_KEY is configured in the environment
 const API_KEY = process.env.API_KEY;
@@ -16,26 +17,26 @@ export async function generateImageForPage(promptText: string): Promise<string> 
     const maxRetries = 3;
     let attempt = 0;
     let lastError: Error | null = null;
+    
+    // Check if the prompt is for the cover to apply a different aspect ratio
+    const isCover = promptText.includes('La portada de un libro de misterio');
+    const aspectRatio = isCover ? '3:4' : '9:16';
 
     while (attempt < maxRetries) {
         try {
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash-image',
-                contents: {
-                    parts: [{ text: promptText }],
-                },
+            const response = await ai.models.generateImages({
+                model: 'imagen-4.0-generate-001',
+                prompt: promptText,
                 config: {
-                    responseModalities: [Modality.IMAGE],
+                  numberOfImages: 1,
+                  outputMimeType: 'image/jpeg',
+                  aspectRatio: aspectRatio as "1:1" | "3:4" | "4:3" | "9:16" | "16:9",
                 },
             });
 
-            if (response.candidates && response.candidates.length > 0 && response.candidates[0].content && response.candidates[0].content.parts) {
-                for (const part of response.candidates[0].content.parts) {
-                    if (part.inlineData) {
-                        const base64ImageBytes: string = part.inlineData.data;
-                        return `data:${part.inlineData.mimeType};base64,${base64ImageBytes}`;
-                    }
-                }
+            if (response.generatedImages && response.generatedImages.length > 0) {
+                const base64ImageBytes: string = response.generatedImages[0].image.imageBytes;
+                return `data:image/jpeg;base64,${base64ImageBytes}`;
             }
             
             throw new Error("No image data found in the API response.");
